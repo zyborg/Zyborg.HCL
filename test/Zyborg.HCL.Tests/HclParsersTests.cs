@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using Sprache;
 
 namespace Zyborg.HCL.Tests
@@ -63,17 +64,25 @@ namespace Zyborg.HCL.Tests
 
         [TestMethod]
         public void TestHereDoc()
-        {
-            var contentPre = @"
+        {            
+            var tests = new[] {
+                @"
+",
+                @"
 line1
 line2
 line3
-";
-            var content = contentPre.Trim('\n', '\r');
-            var heredoc = $@"<<EOF{contentPre}EOF";
+",
+            };
 
-            Assert.AreEqual(content,
-                HclParsers.HereDocParser.Parse(heredoc));
+            foreach (var contentPre in tests)
+            {
+                var content = contentPre.TrimStart('\n', '\r');
+                var heredoc = $@"<<EOF{contentPre}EOF";
+
+                Assert.AreEqual(content,
+                    HclParsers.HereDocParser.Parse(heredoc));
+            }
         }
 
         [TestMethod]
@@ -85,17 +94,18 @@ line3
 ++line3
 ++ line4
 ";
-            var content = contentPre.Replace("++", "").Trim('\n', '\r');
+            var content = contentPre.Replace("++", "").TrimStart('\n', '\r');
+            var parser = HclParsers.IndentedHereDocParser;
 
-            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
+            Assert.AreEqual(content, parser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}EOF"));
-            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
+            Assert.AreEqual(content, parser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")} EOF"));
-            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
+            Assert.AreEqual(content, parser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}  EOF"));
-            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
+            Assert.AreEqual(content, parser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}   EOF"));
-            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
+            Assert.AreEqual(content, parser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}         EOF"));
         }
     }

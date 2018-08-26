@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -68,53 +69,45 @@ namespace Zyborg.HCL
             from start in Parse.String("<<")
             from endId in IdParser
             from nl in Parse.LineEnd
-            from content in Parse.Until(Parse.AnyChar, (
-                from nl in Parse.LineEnd
+            from content in Parse.Until((
+                from line in Parse.CharExcept("\r\n").Many().Text()
+                from eol in Parse.LineEnd
+                select line + eol
+                ), (
                 from endId in Parse.String(endId)
-                select endId)).Text()
-            select content;
+                select endId))
+            select string.Join("", content);
 
         public static readonly Parser<string> IndentedHereDocParser =
             from start in Parse.String("<<-")
             from endId in IdParser
             from nl in Parse.LineEnd
-            from content in Parse.Until(Parse.AnyChar, (
-                from nl in Parse.LineEnd
+            from content in Parse.Until((
+                from indent in Parse.Char(' ').Many().Text()
+                from line in Parse.CharExcept("\r\n").Many().Text()
+                from eol in Parse.LineEnd
+                select (indent, line, eol)
+                ), (
                 from ws in Parse.WhiteSpace.Many()
                 from endId in Parse.String(endId)
-                select endId)).Text()
-            select StripIndents(IndentedLinesParser.Parse(content));
+                select endId))
+            select StripIndents(content);
 
-        public static readonly Parser<IEnumerable<IndentedHerDocLine>> IndentedLinesParser = (
-                from indent in Parse.Char(' ').Many().Text()
-                from content in Parse.CharExcept("\n\r").Many().Text()
-                from terminator in Parse.LineTerminator.Optional()
-                select new IndentedHerDocLine {
-                    _indent = indent,
-                    _content = content,
-                    _terminator = terminator.GetOrElse(string.Empty),
-                }).Many();
-
-        public static string StripIndents(IEnumerable<IndentedHerDocLine> lines)
+        public static string StripIndents(IEnumerable<(string indent, string line, string eol)> lines)
         {
             string indent = null;
             foreach (var l in lines)
             {
-                if (indent == null || l._indent.Length < indent.Length)
-                    indent = l._indent;
+                if (indent == null || l.indent.Length < indent.Length)
+                    indent = l.indent;
             }
             var indentLen = indent?.Length ?? 0;
             var buff = new StringBuilder();
             foreach (var l in lines)
             {
-                if (indentLen > 0)
-                {
-                    l._indent = l._indent.Remove(0, indentLen);
-                }
-                buff.Append(l._indent)
-                    .Append(l._content)
-                    .Append(l._terminator);
-
+                buff.Append(l.indent.Remove(0, indentLen))
+                    .Append(l.line)
+                    .Append(l.eol);
             }
 
             return buff.ToString();
