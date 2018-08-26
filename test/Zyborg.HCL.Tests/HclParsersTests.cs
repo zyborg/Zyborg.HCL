@@ -38,11 +38,11 @@ namespace Zyborg.HCL.Tests
         public void TestIdentifier()
         {
             Assert.AreEqual("abc_def-ghi_jkl",
-                HclParsers.Id.Parse("abc_def-ghi_jkl"));
-            Assert.IsTrue(HclParsers.Id.TryParse("abc").WasSuccessful);
-            Assert.IsTrue(HclParsers.Id.TryParse("a-bc").WasSuccessful);
-            Assert.IsTrue(HclParsers.Id.TryParse("abc").WasSuccessful);
-            Assert.IsFalse(HclParsers.Id.TryParse("-abc").WasSuccessful);
+                HclParsers.IdParser.Parse("abc_def-ghi_jkl"));
+            Assert.IsTrue(HclParsers.IdParser.TryParse("abc").WasSuccessful);
+            Assert.IsTrue(HclParsers.IdParser.TryParse("a-bc").WasSuccessful);
+            Assert.IsTrue(HclParsers.IdParser.TryParse("abc").WasSuccessful);
+            Assert.IsFalse(HclParsers.IdParser.TryParse("-abc").WasSuccessful);
         }
 
         [TestMethod]

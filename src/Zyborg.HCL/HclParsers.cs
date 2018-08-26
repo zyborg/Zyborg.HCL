@@ -52,7 +52,7 @@ namespace Zyborg.HCL
             Parse.LetterOrDigit.Or(Parse.Chars('_'));
         public static readonly Parser<char> IdContinueParser =
             IdStartParser.Or(Parse.Char('-'));
-        public static readonly Parser<string> Id = 
+        public static readonly Parser<string> IdParser = 
             Parse.Identifier(IdStartParser, IdContinueParser);
         
         public static readonly Parser<NullValue> NullParser =
@@ -66,7 +66,7 @@ namespace Zyborg.HCL
 
         public static readonly Parser<string> HereDocParser =
             from start in Parse.String("<<")
-            from endId in Id
+            from endId in IdParser
             from nl in Parse.LineEnd
             from content in Parse.Until(Parse.AnyChar, (
                 from nl in Parse.LineEnd
@@ -76,7 +76,7 @@ namespace Zyborg.HCL
 
         public static readonly Parser<string> IndentedHereDocParser =
             from start in Parse.String("<<-")
-            from endId in Id
+            from endId in IdParser
             from nl in Parse.LineEnd
             from content in Parse.Until(Parse.AnyChar, (
                 from nl in Parse.LineEnd
