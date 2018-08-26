@@ -78,7 +78,7 @@ line3
             foreach (var contentPre in tests)
             {
                 var content = contentPre.TrimStart('\n', '\r');
-                var heredoc = $@"<<EOF{contentPre}EOF";
+                var heredoc = $"<<EOF{contentPre}EOF\n";
 
                 Assert.AreEqual(content,
                     HclParsers.HereDocParser.Parse(heredoc));
@@ -98,15 +98,15 @@ line3
             var parser = HclParsers.IndentedHereDocParser;
 
             Assert.AreEqual(content, parser.Parse(
-                $@"<<-EOF{contentPre.Replace("++", "  ")}EOF"));
+                $"<<-EOF{contentPre.Replace("++", "  ")}EOF\n"));
             Assert.AreEqual(content, parser.Parse(
-                $@"<<-EOF{contentPre.Replace("++", "  ")} EOF"));
+                $"<<-EOF{contentPre.Replace("++", "  ")} EOF\n"));
             Assert.AreEqual(content, parser.Parse(
-                $@"<<-EOF{contentPre.Replace("++", "  ")}  EOF"));
+                $"<<-EOF{contentPre.Replace("++", "  ")}  EOF\n"));
             Assert.AreEqual(content, parser.Parse(
-                $@"<<-EOF{contentPre.Replace("++", "  ")}   EOF"));
+                $"<<-EOF{contentPre.Replace("++", "  ")}   EOF\n"));
             Assert.AreEqual(content, parser.Parse(
-                $@"<<-EOF{contentPre.Replace("++", "  ")}         EOF"));
+                $"<<-EOF{contentPre.Replace("++", "  ")}         EOF\n"));
         }
     }
 }

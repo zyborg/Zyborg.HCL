@@ -75,6 +75,7 @@ namespace Zyborg.HCL
                 select line + eol
                 ), (
                 from endId in Parse.String(endId)
+                from nl in Parse.LineEnd
                 select endId))
             select string.Join("", content);
 
@@ -90,6 +91,7 @@ namespace Zyborg.HCL
                 ), (
                 from ws in Parse.WhiteSpace.Many()
                 from endId in Parse.String(endId)
+                from nl in Parse.LineEnd
                 select endId))
             select StripIndents(content);
 
