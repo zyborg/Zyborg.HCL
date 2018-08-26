@@ -61,5 +61,42 @@ namespace Zyborg.HCL.Tests
                 HclParser.Bool.Parse("false"));
         }
 
+        [TestMethod]
+        public void TestHereDoc()
+        {
+            var contentPre = @"
+line1
+line2
+line3
+";
+            var content = contentPre.Trim('\n', '\r');
+            var heredoc = $@"<<EOF{contentPre}EOF";
+
+            Assert.AreEqual(content,
+                HclParser.HereDoc.Parse(heredoc));
+        }
+
+        [TestMethod]
+        public void TestIndentedHereDoc()
+        {
+            var contentPre = @"
+++  line1
+++    line2
+++line3
+++ line4
+";
+            var content = contentPre.Replace("++", "").Trim('\n', '\r');
+
+            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+                $@"<<-EOF{contentPre.Replace("++", "  ")}EOF"));
+            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+                $@"<<-EOF{contentPre.Replace("++", "  ")} EOF"));
+            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+                $@"<<-EOF{contentPre.Replace("++", "  ")}  EOF"));
+            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+                $@"<<-EOF{contentPre.Replace("++", "  ")}   EOF"));
+            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+                $@"<<-EOF{contentPre.Replace("++", "  ")}         EOF"));
+        }
     }
 }

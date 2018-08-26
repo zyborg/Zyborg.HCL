@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using Sprache;
 
@@ -62,7 +64,61 @@ namespace Zyborg.HCL
                 .Or(Parse.String("false")).Text()
             select literal == "true";
 
-        public static readonly Parser<
+        public static readonly Parser<string> HereDoc =
+            from start in Parse.String("<<")
+            from endId in Id
+            from nl in Parse.LineEnd
+            from content in Parse.Until(Parse.AnyChar, (
+                from nl in Parse.LineEnd
+                from endId in Parse.String(endId)
+                select endId)).Text()
+            select content;
+
+        public static readonly Parser<string> IndentedHereDoc =
+            from start in Parse.String("<<-")
+            from endId in Id
+            from nl in Parse.LineEnd
+            from content in Parse.Until(Parse.AnyChar, (
+                from nl in Parse.LineEnd
+                from ws in Parse.WhiteSpace.Many()
+                from endId in Parse.String(endId)
+                select endId)).Text()
+            select StripIndents(IndentedLines.Parse(content));
+
+        public static readonly Parser<IEnumerable<IndentedHerDocLine>> IndentedLines = (
+                from indent in Parse.Char(' ').Many().Text()
+                from content in Parse.CharExcept("\n\r").Many().Text()
+                from terminator in Parse.LineTerminator.Optional()
+                select new IndentedHerDocLine {
+                    _indent = indent,
+                    _content = content,
+                    _terminator = terminator.GetOrElse(string.Empty),
+                }).Many();
+
+        public static string StripIndents(IEnumerable<IndentedHerDocLine> lines)
+        {
+            string indent = null;
+            foreach (var l in lines)
+            {
+                if (indent == null || l._indent.Length < indent.Length)
+                    indent = l._indent;
+            }
+            var indentLen = indent?.Length ?? 0;
+            var buff = new StringBuilder();
+            foreach (var l in lines)
+            {
+                if (indentLen > 0)
+                {
+                    l._indent = l._indent.Remove(0, indentLen);
+                }
+                buff.Append(l._indent)
+                    .Append(l._content)
+                    .Append(l._terminator);
+
+            }
+
+            return buff.ToString();
+        }
 
         public HclParser()
         {
@@ -79,6 +135,13 @@ namespace Zyborg.HCL
 
             private NullValue()
             { }
+        }
+
+        public class IndentedHerDocLine
+        {
+            public string _indent;
+            public string _content;
+            public string _terminator; 
         }
     }
 }
