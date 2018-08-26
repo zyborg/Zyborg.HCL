@@ -115,6 +115,26 @@ namespace Zyborg.HCL
             return buff.ToString();
         }
 
+        public static readonly Parser<JValue> PrimitiveValueParser =
+            NullParser.Select(x => JValue.CreateNull())
+                .Or(BoolParser.Select(x => new JValue(x)))
+                .Or(IndentedHereDocParser.Select(x => new JValue(x)))
+                .Or(HereDocParser.Select(x => new JValue(x)))
+                .Or(QuotedStringParser.Select(x => new JValue(x)))
+                .Token();
+
+        public static readonly Parser<JProperty> PropertyParser =
+            from propKey in QuotedStringParser.Or(IdParser)
+            from propEqu in Parse.Char('=').Token()
+            from propVal in PrimitiveValueParser
+            select new JProperty(propKey, propVal);
+
+        public static readonly Parser<JObject> ObjectParser =
+            from enter in Parse.Char('{').Token()
+            from props in PropertyParser.Many()
+            from leave in Parse.Char('}').Token()
+            select new JObject(props.ToArray());
+
         public HclParsers()
         {
         }
