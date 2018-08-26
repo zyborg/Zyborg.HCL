@@ -4,61 +4,61 @@ using Sprache;
 namespace Zyborg.HCL.Tests
 {
     [TestClass]
-    public class HclParserTests
+    public class HclParsersTests
     {
         [TestMethod]
         public void TestdHexDigit()
         {
             foreach (var c in "0123456789abcdef")
-                Assert.AreEqual(c, HclParser.HexDigit.Parse($"{c}"));
+                Assert.AreEqual(c, HclParsers.HexDigitParser.Parse($"{c}"));
         }
 
         [TestMethod]
         public void TestEscapedHexChar()
         {
-            Assert.AreEqual('\n', HclParser.EscapedHexChar.Parse("\\x0a"));
+            Assert.AreEqual('\n', HclParsers.EscapedHexCharParser.Parse("\\x0a"));
         }
 
         [TestMethod]
         public void TestEscapedSingleChar()
         {
-            Assert.AreEqual('\\', HclParser.EscapedSingleChar.Parse("\\\\"));
-            Assert.AreEqual('\"', HclParser.EscapedSingleChar.Parse("\\\""));
-            Assert.AreEqual('\n', HclParser.EscapedSingleChar.Parse("\\n"));
+            Assert.AreEqual('\\', HclParsers.EscapedSingleCharParser.Parse("\\\\"));
+            Assert.AreEqual('\"', HclParsers.EscapedSingleCharParser.Parse("\\\""));
+            Assert.AreEqual('\n', HclParsers.EscapedSingleCharParser.Parse("\\n"));
         }
 
         [TestMethod]
         public void TestQuotedString()
         {
             Assert.AreEqual("ABC\n\\\r\"Aa",
-                HclParser.QuotedString.Parse("\"ABC\\n\\\\\\x0d\\\"\\x41\\X61\""));
+                HclParsers.QuotedStringParser.Parse("\"ABC\\n\\\\\\x0d\\\"\\x41\\X61\""));
         }
 
         [TestMethod]
         public void TestIdentifier()
         {
             Assert.AreEqual("abc_def-ghi_jkl",
-                HclParser.Id.Parse("abc_def-ghi_jkl"));
-            Assert.IsTrue(HclParser.Id.TryParse("abc").WasSuccessful);
-            Assert.IsTrue(HclParser.Id.TryParse("a-bc").WasSuccessful);
-            Assert.IsTrue(HclParser.Id.TryParse("abc").WasSuccessful);
-            Assert.IsFalse(HclParser.Id.TryParse("-abc").WasSuccessful);
+                HclParsers.Id.Parse("abc_def-ghi_jkl"));
+            Assert.IsTrue(HclParsers.Id.TryParse("abc").WasSuccessful);
+            Assert.IsTrue(HclParsers.Id.TryParse("a-bc").WasSuccessful);
+            Assert.IsTrue(HclParsers.Id.TryParse("abc").WasSuccessful);
+            Assert.IsFalse(HclParsers.Id.TryParse("-abc").WasSuccessful);
         }
 
         [TestMethod]
         public void TestNullValue()
         {
-            Assert.AreEqual(HclParser.NullValue.Instance,
-                HclParser.Null.Parse("null"));
+            Assert.AreEqual(HclParsers.NullValue.Instance,
+                HclParsers.NullParser.Parse("null"));
         }
 
         [TestMethod]
         public void TestBoolValue()
         {
             Assert.AreEqual(true,
-                HclParser.Bool.Parse("true"));
+                HclParsers.BoolParser.Parse("true"));
             Assert.AreEqual(false,
-                HclParser.Bool.Parse("false"));
+                HclParsers.BoolParser.Parse("false"));
         }
 
         [TestMethod]
@@ -73,7 +73,7 @@ line3
             var heredoc = $@"<<EOF{contentPre}EOF";
 
             Assert.AreEqual(content,
-                HclParser.HereDoc.Parse(heredoc));
+                HclParsers.HereDocParser.Parse(heredoc));
         }
 
         [TestMethod]
@@ -87,15 +87,15 @@ line3
 ";
             var content = contentPre.Replace("++", "").Trim('\n', '\r');
 
-            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}EOF"));
-            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")} EOF"));
-            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}  EOF"));
-            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}   EOF"));
-            Assert.AreEqual(content, HclParser.IndentedHereDoc.Parse(
+            Assert.AreEqual(content, HclParsers.IndentedHereDocParser.Parse(
                 $@"<<-EOF{contentPre.Replace("++", "  ")}         EOF"));
         }
     }

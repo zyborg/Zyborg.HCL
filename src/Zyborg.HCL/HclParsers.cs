@@ -9,20 +9,20 @@ using Sprache;
 
 namespace Zyborg.HCL
 {
-    public class HclParser
+    public class HclParsers
     {
-        public static readonly Parser<char> HexDigit = Parse.Char(
+        public static readonly Parser<char> HexDigitParser = Parse.Char(
                 c => (c >= '0' && c <= '9')
                     || (c >= 'a' && c <= 'f')
                     || (c >= 'A' && c <= 'F'), "hexadecimal digit");
 
-        public static readonly Parser<char> EscapedHexChar = (
+        public static readonly Parser<char> EscapedHexCharParser = (
             from escape in Parse.Char('\\')
             from hex in Parse.IgnoreCase('x')
-            from digits in HexDigit.Repeat(2).Text()
+            from digits in HexDigitParser.Repeat(2).Text()
             select (char)int.Parse(digits, NumberStyles.HexNumber));
 
-        public static readonly Parser<char> EscapedSingleChar = (
+        public static readonly Parser<char> EscapedSingleCharParser = (
             from escape in Parse.Char('\\')
             from literal in Parse.AnyChar
             select literal).Select(x => {
@@ -39,32 +39,32 @@ namespace Zyborg.HCL
                 }
             });
 
-        public static readonly Parser<string> QuotedString = (
+        public static readonly Parser<string> QuotedStringParser = (
             from openQuote in Sprache.Parse.Char('"')
-            from content in EscapedHexChar
-                .Or(EscapedSingleChar)
+            from content in EscapedHexCharParser
+                .Or(EscapedSingleCharParser)
                 .Or(Parse.CharExcept('"'))
                 .Many().Text()
             from closeQuote in Parse.Char('"')
             select content).Token();
 
-        public static readonly Parser<char> IdStart =
+        public static readonly Parser<char> IdStartParser =
             Parse.LetterOrDigit.Or(Parse.Chars('_'));
-        public static readonly Parser<char> IdContinue =
-            IdStart.Or(Parse.Char('-'));
+        public static readonly Parser<char> IdContinueParser =
+            IdStartParser.Or(Parse.Char('-'));
         public static readonly Parser<string> Id = 
-            Parse.Identifier(IdStart, IdContinue);
+            Parse.Identifier(IdStartParser, IdContinueParser);
         
-        public static readonly Parser<NullValue> Null =
+        public static readonly Parser<NullValue> NullParser =
             from literal in Parse.String("null")
             select NullValue.Instance;
         
-        public static readonly Parser<bool> Bool =
+        public static readonly Parser<bool> BoolParser =
             from literal in Parse.String("true")
                 .Or(Parse.String("false")).Text()
             select literal == "true";
 
-        public static readonly Parser<string> HereDoc =
+        public static readonly Parser<string> HereDocParser =
             from start in Parse.String("<<")
             from endId in Id
             from nl in Parse.LineEnd
@@ -74,7 +74,7 @@ namespace Zyborg.HCL
                 select endId)).Text()
             select content;
 
-        public static readonly Parser<string> IndentedHereDoc =
+        public static readonly Parser<string> IndentedHereDocParser =
             from start in Parse.String("<<-")
             from endId in Id
             from nl in Parse.LineEnd
@@ -83,9 +83,9 @@ namespace Zyborg.HCL
                 from ws in Parse.WhiteSpace.Many()
                 from endId in Parse.String(endId)
                 select endId)).Text()
-            select StripIndents(IndentedLines.Parse(content));
+            select StripIndents(IndentedLinesParser.Parse(content));
 
-        public static readonly Parser<IEnumerable<IndentedHerDocLine>> IndentedLines = (
+        public static readonly Parser<IEnumerable<IndentedHerDocLine>> IndentedLinesParser = (
                 from indent in Parse.Char(' ').Many().Text()
                 from content in Parse.CharExcept("\n\r").Many().Text()
                 from terminator in Parse.LineTerminator.Optional()
@@ -120,7 +120,7 @@ namespace Zyborg.HCL
             return buff.ToString();
         }
 
-        public HclParser()
+        public HclParsers()
         {
         }
 
